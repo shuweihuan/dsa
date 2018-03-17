@@ -15,10 +15,10 @@ sys.path.append("..")
 from base.Log import Log
 from base.Time import Time
 from base.Stock import Stock
-from base.Spider import Spider
+#from base.Spider import Spider
 
-reload(sys)  
-sys.setdefaultencoding('utf8')
+#reload(sys)  
+#sys.setdefaultencoding('utf8')
 
 ###################
 # Stock List Data #
