@@ -11,6 +11,32 @@ class Time:
 		return time.strftime('%Y-%m-%d')
 
 	@staticmethod
+	def time():
+		return time.strftime('%H:%M:%S')
+
+	@staticmethod
+	def oneYearAgo():
+		today = time.strftime('%Y-%m-%d')
+		today_ = today.split('-')
+		year = int(today_[0])
+		year -= 1
+		year = str(year)
+		today_[0] = year
+		return '-'.join(today_)
+
+	@staticmethod
+	def hasMarketOpened():
+		return Time.time() < "09:00:00"
+
+	@staticmethod
+	def hasMarketClosed():
+		return Time.time() > "15:00:00"
+
+	@staticmethod
+	def getPrevYear(year):
+		return year-1
+
+	@staticmethod
 	def getPrevQuarter(year, quarter):
 		if quarter == 1:
 			return year-1, 4

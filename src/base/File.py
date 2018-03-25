@@ -18,5 +18,7 @@ class File:
 	@staticmethod
 	def getLatestFilePath(path, n=1):
 		file_name = File.getLatestFileName(path, n)
+		if file_name == "":
+			return ""
 		return os.path.join(path, file_name)
 
