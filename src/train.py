@@ -8,8 +8,8 @@ import pandas as pd
 import talib
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn import model_selection
+from sklearn import metrics
 
 from xgboost import XGBClassifier
 
@@ -51,6 +51,16 @@ def calc_incr_level(incr):
         return 3
     if 0.20<incr:
         return 4
+
+def eval(y, y_pred, threshold=0.5):
+    y_pred = (y_pred >= threshold) * 1
+    print("-> Accuracy: %.4f" % metrics.accuracy_score(y, y_pred))
+    print("-> AUC: %.4f" % metrics.roc_auc_score(y, y_pred))
+    print("-> Precision: %.4f" % metrics.precision_score(y, y_pred))
+    print("-> Recall: %.4f" % metrics.recall_score(y, y_pred))
+    print("-> F1-score: %.4f" % metrics.f1_score(y, y_pred))
+    print("-> Confusion Matrix:")
+    print(metrics.confusion_matrix(y, y_pred))
 
 """
 处理数据，生成预测目标和特征
@@ -177,7 +187,7 @@ df = load_data("../data/stock_history")
 # 训练测试集划分
 X = df.iloc[:, 1:]
 y = df.iloc[:, 0]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.2, random_state=0)
 print("")
 print("-> Shape of X_train:", X_train.shape)
 print("-> Shape of y_train:", y_train.shape)
@@ -185,22 +195,25 @@ print("-> Shape of X_test:", X_test.shape)
 print("-> Shape of y_test", y_test.shape)
 
 #xgboost
-model = XGBClassifier()
-# TODO target should be accuracy on 1
+#model = XGBClassifier()
+model = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
 model.fit(X_train, y_train)
 print(model)
 y_pred = model.predict(X_train)
-accuracy = accuracy_score(y_train, y_pred)
-print("-> Accuracy on train: %.2f%%" % (accuracy * 100.0))
+print("Evaluation on train")
+eval(y_train, y_pred)
 y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-print("-> Accuracy on test: %.2f%%" % (accuracy * 100.0))
+print("Evaluation on test")
+eval(y_test, y_pred)
+y_pred = model.predict_proba(X_test)[:, 1]
+print("Evaluation on test with threshold=0.75")
+eval(y_test, y_pred, 0.75)
 
 # 测试结果输出
-# df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
-# df_test = df_test.reset_index()
-# df = df.reset_index()
-# df_test = pd.merge(df_test, df, on='key', how='inner')
-# df_test = df_test.set_index('key')
-# df_test.to_csv("test.csv")
+df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
+df_test = df_test.reset_index()
+df = df.reset_index()
+df_test = pd.merge(df_test, df, on='key', how='inner')
+df_test = df_test.set_index('key')
+df_test.to_csv("test.csv")
 
