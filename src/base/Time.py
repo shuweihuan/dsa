@@ -10,6 +10,15 @@ class Time:
 	def today():
 		return time.strftime('%Y-%m-%d')
 
+	@ staticmethod
+	def day(n):
+		day = datetime.date.today()
+		if n >= 0:
+			day += datetime.timedelta(days=n)
+		else:
+			day -= datetime.timedelta(days=abs(n))
+		return day.strftime('%Y-%m-%d')
+
 	@staticmethod
 	def time():
 		return time.strftime('%H:%M:%S')

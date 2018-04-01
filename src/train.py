@@ -24,33 +24,19 @@ def norm_float(x, precision=4):
     f = "%." + str(precision) + "f"
     return f % x
 
-# 计算是否上涨
-def is_incr(x):
+# 是否上涨
+def is_gt_0(x):
     if x > 0:
         return 1
     else:
         return 0
 
-# 计算涨幅分档
-def calc_incr_level(incr):
-    if incr<-0.20:
-        return -4
-    if -0.20<=incr and incr>-0.10:
-        return -3
-    if -0.10<=incr and incr>-0.05:
-        return -2
-    if -0.05<=incr and incr>-0.01:
-        return -1
-    if -0.01<=incr and incr<=0.01:
-        return 0
-    if 0.01<incr and incr<=0.05:
+# 是否上涨10%以上
+def is_gt_10pp(x):
+    if x > 0.1:
         return 1
-    if 0.05<incr and incr<=0.10:
-        return 2
-    if 0.10<incr and incr<=0.20:
-        return 3
-    if 0.20<incr:
-        return 4
+    else:
+        return 0
 
 def eval(y, y_pred, threshold=0.5):
     y_pred = (y_pred >= threshold) * 1
@@ -68,15 +54,19 @@ def eval(y, y_pred, threshold=0.5):
 def process(df):
 
     # 计算目标
-    incr = df['close'].pct_change(periods=5).shift(-5)  # 未来五日涨幅
-    df['label'] = incr.apply(is_incr)
+    ## 预测未来5日最高涨幅
+    incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1 # 未来五日的最高涨幅
+    df['label'] = incr.apply(is_gt_10pp) # 上涨10%以上
+    ## 预测未来5日收盘涨幅
+#    incr = df['close'].pct_change(periods=5).shift(-5)  # 未来五日收盘涨幅
+#    df['label'] = incr.apply(is_gt_0) # 上涨
     df = df[['label', 'open', 'close', 'high', 'low', 'volume']]
 
     # 计算特征
 
     ## 本日各价格之间的变化
     df['OPEN_CLOSE_R'] = df['open'] / df['close']
-    df['HIGH__CLOSE_R'] = df['high'] / df['close']
+    df['HIGH_CLOSE_R'] = df['high'] / df['close']
     df['LOW_CLOSE_R'] = df['low'] / df['close']
     df['HIGH_OPEN_R'] = df['high'] / df['open']
     df['LOW_OPEN_R'] = df['low'] / df['open']
