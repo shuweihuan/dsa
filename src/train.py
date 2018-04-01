@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import pandas as pd
 import talib
+import pickle
 import matplotlib.pyplot as plt
 
 from sklearn import model_selection
@@ -198,6 +199,7 @@ eval(y_test, y_pred)
 y_pred = model.predict_proba(X_test)[:, 1]
 print("Evaluation on test with threshold=0.75")
 eval(y_test, y_pred, 0.75)
+pickle.dump(model, open(XGBOOST_MODEL_FILE, 'wb'))
 
 # 测试结果输出
 df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
