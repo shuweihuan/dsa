@@ -6,7 +6,7 @@ import pandas as pd
 
 # path setting
 
-MAIN_PATH = "/root/workspace/dsa"
+MAIN_PATH = ".."
 
 SRC_PATH = os.path.join(MAIN_PATH, "src")
 CONF_PATH = os.path.join(MAIN_PATH, "conf")

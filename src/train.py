@@ -8,11 +8,11 @@ import pandas as pd
 import talib
 import pickle
 import matplotlib.pyplot as plt
-
 from sklearn import model_selection
 from sklearn import metrics
-
 from xgboost import XGBClassifier
+sys.path.append("../..")
+from conf.config import *
 
 # 规范化股票代码
 def norm_code(code):
@@ -173,7 +173,7 @@ def load_data(path):
         merge_df = merge_df.append(df)
     return merge_df
 
-df = load_data("../data/stock_history")
+df = load_data("../data/stock_history_test")
 
 # 训练测试集划分
 X = df.iloc[:, 1:]
