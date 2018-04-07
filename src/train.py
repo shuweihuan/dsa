@@ -39,6 +39,9 @@ def is_gt_10pp(x):
     else:
         return 0
 
+"""
+输出评估结果
+"""
 def eval(y, y_pred, threshold=0.5):
     y_pred = (y_pred >= threshold) * 1
     print("-> Accuracy: %.4f" % metrics.accuracy_score(y, y_pred))
@@ -151,7 +154,9 @@ def process(df):
 
     return df
 
-# 加载数据
+"""
+加载数据
+"""
 def load_data(path):
     merge_df = pd.DataFrame()
     if not os.path.isdir(path):
@@ -173,39 +178,59 @@ def load_data(path):
         merge_df = merge_df.append(df)
     return merge_df
 
-df = load_data("../data/stock_history_test")
+"""
+训练
+"""
+def train(data_path):
 
-# 训练测试集划分
-X = df.iloc[:, 1:]
-y = df.iloc[:, 0]
-X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.2, random_state=0)
-print("")
-print("-> Shape of X_train:", X_train.shape)
-print("-> Shape of y_train:", y_train.shape)
-print("-> Shape of X_test:", X_test.shape)
-print("-> Shape of y_test", y_test.shape)
+    ## 加载数据
+    df = load_data(data_path)
 
-#xgboost
-#model = XGBClassifier()
-model = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
-model.fit(X_train, y_train)
-print(model)
-y_pred = model.predict(X_train)
-print("Evaluation on train")
-eval(y_train, y_pred)
-y_pred = model.predict(X_test)
-print("Evaluation on test")
-eval(y_test, y_pred)
-y_pred = model.predict_proba(X_test)[:, 1]
-print("Evaluation on test with threshold=0.75")
-eval(y_test, y_pred, 0.75)
-pickle.dump(model, open(XGBOOST_MODEL_FILE, 'wb'))
+    ## 训练测试集划分
+    X = df.iloc[:, 1:]
+    y = df.iloc[:, 0]
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.2, random_state=0)
+    print("")
+    print("-> Shape of X_train:", X_train.shape)
+    print("-> Shape of y_train:", y_train.shape)
+    print("-> Shape of X_test:", X_test.shape)
+    print("-> Shape of y_test", y_test.shape)
 
-# 测试结果输出
-df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
-df_test = df_test.reset_index()
-df = df.reset_index()
-df_test = pd.merge(df_test, df, on='key', how='inner')
-df_test = df_test.set_index('key')
-df_test.to_csv("test.csv")
+    ## 训练xgboost模型
+    model = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
+    model.fit(X_train, y_train)
+    print(model)
+    y_pred = model.predict(X_train)
+    print("Evaluation on train")
+    eval(y_train, y_pred)
+    y_pred = model.predict(X_test)
+    print("Evaluation on test")
+    eval(y_test, y_pred)
+    y_pred = model.predict_proba(X_test)[:, 1]
+    print("Evaluation on test with threshold=0.75")
+    eval(y_test, y_pred, 0.75)
+    pickle.dump(model, open(XGBOOST_MODEL_FILE, 'wb'))
+
+    ## 测试结果输出
+#    df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
+#    df_test = df_test.reset_index()
+#    df = df.reset_index()
+#    df_test = pd.merge(df_test, df, on='key', how='inner')
+#    df_test = df_test.set_index('key')
+#    df_test.to_csv("test.csv")
+
+if __name__ == "__main__":
+
+    if len(sys.argv) < 2:
+        print("Error: Invalid args.")
+        exit(1)
+    if sys.argv[1] == "tiny":
+        data_path = HISTORY_STOCK_SAMPLE_PATH
+        train(data_path)
+    elif sys.argv[1] == "full":
+        data_path = HISTORY_STOCK_DATA_PATH
+        train(data_path)
+    else:
+        print("Error: Invalid args.")
+        exit(1)
 
