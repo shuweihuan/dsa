@@ -1,15 +1,8 @@
-#!/usr/bin/python
-
 import os
 import sys
 import numpy as np
 import pandas as pd
 import talib
-import pickle
-import matplotlib.pyplot as plt
-from sklearn import model_selection
-from sklearn import metrics
-from xgboost import XGBClassifier
 
 sys.path.append("..")
 from conf.config import *
@@ -23,62 +16,18 @@ def norm_code(code):
 	return '0' * l + code
 
 
-# 规范化浮点数
-def norm_float(x, precision=4):
-	f = "%." + str(precision) + "f"
-	return f % x
+def process_data(df, label=False, date=""):
+	if label == True:
+		# 计算目标
+		## 预测未来5日最高涨幅
+		incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来五日的最高涨幅
+		df['label'] = incr.apply(is_gt_10pp)  # 上涨10%以上
 
-
-# 是否上涨
-def is_gt_0(x):
-	if x > 0:
-		return 1
+	# 保留基础字段
+	if label == True:
+		df = df[['label', 'date', 'open', 'close', 'high', 'low', 'volume']]
 	else:
-		return 0
-
-
-# 是否上涨10%以上
-def is_gt_10pp(x):
-	if x > 0.1:
-		return 1
-	else:
-		return 0
-
-
-"""
-计算评估结果
-"""
-
-
-def eval(y, y_pred, threshold=0.5):
-	y_pred = (y_pred >= threshold) * 1
-	eval_dict = {}
-	eval_dict["accuracy"] = metrics.accuracy_score(y, y_pred)
-	eval_dict["auc"] = metrics.roc_auc_score(y, y_pred)
-	eval_dict["precision"] = metrics.precision_score(y, y_pred)
-	eval_dict["recall"] = metrics.recall_score(y, y_pred)
-	eval_dict["f1-score"] = metrics.f1_score(y, y_pred)
-	eval_dict["confusion_matrix"] = metrics.confusion_matrix(y, y_pred)
-	return eval_dict
-
-
-"""
-处理数据，生成预测目标和特征
-"""
-
-
-def process(df):
-
-	# 计算目标
-
-	## 预测未来5日最高涨幅
-	incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来五日的最高涨幅
-	df['label'] = incr.apply(is_gt_10pp)  # 上涨10%以上
-
-	## 预测未来5日收盘涨幅
-	#    incr = df['close'].pct_change(periods=5).shift(-5)  # 未来五日收盘涨幅
-	#    df['label'] = incr.apply(is_gt_0) # 上涨
-	df = df[['label', 'open', 'close', 'high', 'low', 'volume']]
+		df = df[['date', 'open', 'close', 'high', 'low', 'volume']]
 
 	# 计算特征
 
@@ -163,105 +112,53 @@ def process(df):
 	df['V_MA_20D_R'] = v_ma_20d / df['volume']
 	df['V_MA_60D_R'] = v_ma_60d / df['volume']
 
-	# 行列筛选
-	df = df[incr.notna()]
+	if label == True:
+		# 行列筛选
+		df = df[incr.notna()]
+
+	if date != "":
+		# 筛选指定日期
+		df = df[df['date'] == date]
+
+	# 丢弃date字段
+	df = df.drop('date', axis=1)
 
 	return df
 
 
 """
-加载数据
+读取数据
 """
 
 
-def load_data(path):
+def load_data(data_file):
+	# 读取文件
+	df = pd.read_csv(data_file)
+	# 计算索引
+	df['code'] = df['code'].apply(norm_code)
+	df['key'] = df['code'] + ':' + df['date']
+	df = df.set_index('key')
+	return df
+
+
+"""
+加载并处理数据
+"""
+
+
+def load_and_process(data_path, label=False, date=""):
 	merge_df = pd.DataFrame()
-	if not os.path.isdir(path):
+	if not os.path.isdir(data_path):
 		return merge_df
-	for file in os.listdir(path):
-		f = os.path.join(path, file)
+	for file in os.listdir(data_path):
+		# 加载数据
+		f = os.path.join(data_path, file)
 		Log.notice("loading %s ..." % f)
-		df = pd.read_csv(f)
-		old_len = len(df)
-		# 计算索引
-		df['code'] = df['code'].apply(norm_code)
-		df['key'] = df['code'] + ':' + df['date']
-		df = df.set_index('key')
+		df = load_data(f)
 		# 处理数据
-		df = process(df)
-		new_len = len(df)
-		Log.notice("done, total %d lines, trimmed to %d lines." % (old_len, new_len))
+		Log.notice("processing ...")
+		df = process_data(df, label, date)
 		# 追加一支股票数据
+		Log.notice("merging %d records ..." % len(df))
 		merge_df = merge_df.append(df)
 	return merge_df
-
-
-"""
-训练
-"""
-
-
-def train(data_path, model_path):
-	## 加载数据
-	df = load_data(data_path)
-
-	## 检查模型目录
-	if not os.path.isdir(model_path):
-		os.mkdir(model_path)
-
-	## 训练测试集划分
-	X = df.iloc[:, 1:]
-	y = df.iloc[:, 0]
-	X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.2, random_state=0)
-	Log.notice("shape of X_train: %s" % str(X_train.shape))
-	Log.notice("shape of y_train: %s" % str(y_train.shape))
-	Log.notice("shape of X_test: %s" % str(X_test.shape))
-	Log.notice("shape of y_test: %s" % str(y_test.shape))
-
-	## 训练xgboost模型
-	model = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
-	model.fit(X_train, y_train)
-	Log.notice("model: %s" % str(model))
-
-	## 输出训练集效果
-	y_pred = model.predict(X_train)
-	eval_dict = eval(y_train, y_pred)
-	Log.notice("evaluation on train: %s" % str(eval_dict))
-
-	## 输出测试集效果
-	y_pred = model.predict(X_test)
-	eval_dict = eval(y_test, y_pred)
-	Log.notice("evaluation on test: %s" % str(eval_dict))
-
-	## 输出测试集调整阈值后的效果
-	y_pred = model.predict_proba(X_test)[:, 1]
-	eval_dict = eval(y_test, y_pred, 0.75)
-	Log.notice("evaluation on test with threshold=0.75: %s" % str(eval_dict))
-
-	## 保存模型文件
-	model_file = os.path.join(model_path, 'model.txt')
-	pickle.dump(model, open(model_file, 'wb'))
-
-	## 测试结果输出
-#    df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
-#    df_test = df_test.reset_index()
-#    df = df.reset_index()
-#    df_test = pd.merge(df_test, df, on='key', how='inner')
-#    df_test = df_test.set_index('key')
-#    df_test.to_csv("test.csv")
-
-if __name__ == "__main__":
-
-	if len(sys.argv) < 2:
-		Log.error("Error: Invalid args.")
-		exit(1)
-	if sys.argv[1] == "tiny":
-		train(HISTORY_STOCK_TINY_DATA_PATH, XGBOOST_TINY_MODEL_PATH)
-	elif sys.argv[1] == "sample":
-		train(HISTORY_STOCK_SAMPLE_DATA_PATH, XGBOOST_SAMPLE_MODEL_PATH)
-	elif sys.argv[1] == "full":
-		train(HISTORY_STOCK_DATA_PATH, XGBOOST_MODEL_PATH)
-	else:
-		Log.error("Error: Invalid args.")
-		exit(1)
-
