@@ -4,24 +4,51 @@ import numpy as np
 import pandas as pd
 import talib
 
-sys.path.append("..")
-from conf.config import *
-from base.Log import Log
+
+"""
+规范化股票代码
+"""
 
 
-# 规范化股票代码
 def norm_code(code):
 	code = str(code)
 	l = 6 - len(code)
 	return '0' * l + code
 
 
-def process_data(df, label=False, date=""):
+"""
+规范化浮点数
+"""
+
+
+def norm_float(x, precision=4):
+	f = "%." + str(precision) + "f"
+	return f % x
+
+
+"""
+是否上涨10%以上
+"""
+
+
+def is_gt_10pp(x):
+	if x > 0.1:
+		return 1
+	else:
+		return 0
+
+
+"""
+处理数据
+"""
+
+
+def process_data(df, label=True, date=""):
 	if label == True:
 		# 计算目标
 		## 预测未来5日最高涨幅
 		incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来五日的最高涨幅
-		df['label'] = incr.apply(is_gt_10pp)  # 上涨10%以上
+		df['label'] = incr.apply(is_gt_10pp)  # 未来5日最高点距当前价格上涨10%以上
 
 	# 保留基础字段
 	if label == True:
@@ -146,19 +173,23 @@ def load_data(data_file):
 """
 
 
-def load_and_process(data_path, label=False, date=""):
+def load_and_process(data_path, label=True, sample=1.0, date=""):
 	merge_df = pd.DataFrame()
 	if not os.path.isdir(data_path):
 		return merge_df
 	for file in os.listdir(data_path):
 		# 加载数据
 		f = os.path.join(data_path, file)
-		Log.notice("loading %s ..." % f)
+		print("loading %s ..." % f)
 		df = load_data(f)
 		# 处理数据
-		Log.notice("processing ...")
+		print("processing ...")
 		df = process_data(df, label, date)
-		# 追加一支股票数据
-		Log.notice("merging %d records ..." % len(df))
+		# 随机抽样
+		n = int(sample * len(df))
+		df = df.sample(n=n)
+		# 汇总股票数据
+		print("merging %d records ..." % len(df))
 		merge_df = merge_df.append(df)
 	return merge_df
+

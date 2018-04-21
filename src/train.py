@@ -1,48 +1,13 @@
-#!/usr/bin/python
-
 import os
 import sys
 import numpy as np
 import pandas as pd
-import talib
 import pickle
+import process
 import matplotlib.pyplot as plt
 from sklearn import model_selection
 from sklearn import metrics
 from xgboost import XGBClassifier
-
-sys.path.append("..")
-from conf.config import *
-from base.Log import Log
-
-
-# 规范化股票代码
-def norm_code(code):
-	code = str(code)
-	l = 6 - len(code)
-	return '0' * l + code
-
-
-# 规范化浮点数
-def norm_float(x, precision=4):
-	f = "%." + str(precision) + "f"
-	return f % x
-
-
-# 是否上涨
-def is_gt_0(x):
-	if x > 0:
-		return 1
-	else:
-		return 0
-
-
-# 是否上涨10%以上
-def is_gt_10pp(x):
-	if x > 0.1:
-		return 1
-	else:
-		return 0
 
 
 """
@@ -63,186 +28,52 @@ def eval(y, y_pred, threshold=0.5):
 
 
 """
-处理数据，生成预测目标和特征
-"""
-
-
-def process(df):
-
-	# 计算目标
-
-	## 预测未来5日最高涨幅
-	incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来五日的最高涨幅
-	df['label'] = incr.apply(is_gt_10pp)  # 上涨10%以上
-
-	## 预测未来5日收盘涨幅
-	#    incr = df['close'].pct_change(periods=5).shift(-5)  # 未来五日收盘涨幅
-	#    df['label'] = incr.apply(is_gt_0) # 上涨
-	df = df[['label', 'open', 'close', 'high', 'low', 'volume']]
-
-	# 计算特征
-
-	## 本日各价格之间的变化
-	df['OPEN_CLOSE_R'] = df['open'] / df['close']
-	df['HIGH_CLOSE_R'] = df['high'] / df['close']
-	df['LOW_CLOSE_R'] = df['low'] / df['close']
-	df['HIGH_OPEN_R'] = df['high'] / df['open']
-	df['LOW_OPEN_R'] = df['low'] / df['open']
-	df['HIGH_LOW_R'] = df['high'] / df['low']
-
-	## 前日与本日的量价变化
-	prev_close = df['close'].shift(-1)
-	prev_volume = df['volume'].shift(-1)
-	df['PREV_OPEN_R'] = prev_close / df['open']
-	df['PREV_CLOSE_R'] = prev_close / df['close']
-	df['PREV_HIGH_R'] = prev_close / df['high']
-	df['PREV_LOW_R'] = prev_close / df['low']
-	df['PREV_VOL_R'] = prev_volume / df['volume']
-
-	## 近日量价变化
-	df['PREV_5D_R'] = df['close'].pct_change(periods=5)  # 近5日价格涨幅
-	df['PREV_10D_R'] = df['close'].pct_change(periods=10)  # 近10日价格涨幅
-	df['PREV_20D_R'] = df['close'].pct_change(periods=20)  # 近20日价格涨幅
-	df['PREV_60D_R'] = df['close'].pct_change(periods=60)  # 近60日价格涨幅
-	df['V_PREV_5D_R'] = df['volume'].pct_change(periods=5)  # 近5日交易量涨幅
-	df['V_PREV_10D_R'] = df['volume'].pct_change(periods=10)  # 近10日交易量涨幅
-	df['V_PREV_20D_R'] = df['volume'].pct_change(periods=20)  # 近20日交易量涨幅
-	df['V_PREV_60D_R'] = df['volume'].pct_change(periods=60)  # 近60日交易量涨幅
-
-	## MAX & V_MAX与当日收盘价的相对值
-	max_5d = talib.MAX(np.asarray(df['close']), 5)
-	max_10d = talib.MAX(np.asarray(df['close']), 10)
-	max_20d = talib.MAX(np.asarray(df['close']), 20)
-	max_60d = talib.MAX(np.asarray(df['close']), 60)
-	v_max_5d = talib.MAX(np.asarray(df['volume']), 5)
-	v_max_10d = talib.MAX(np.asarray(df['volume']), 10)
-	v_max_20d = talib.MAX(np.asarray(df['volume']), 20)
-	v_max_60d = talib.MAX(np.asarray(df['volume']), 60)
-	df['MAX_5D_R'] = max_5d / df['close']
-	df['MAX_10D_R'] = max_10d / df['close']
-	df['MAX_20D_R'] = max_20d / df['close']
-	df['MAX_60D_R'] = max_60d / df['close']
-	df['V_MAX_5D_R'] = v_max_5d / df['volume']
-	df['V_MAX_10D_R'] = v_max_20d / df['volume']
-	df['V_MAX_20D_R'] = v_max_20d / df['volume']
-	df['V_MAX_60D_R'] = v_max_60d / df['volume']
-
-	## MIN & V_MIN与当日收盘价的相对值
-	min_5d = talib.MIN(np.asarray(df['close']), 5)
-	min_10d = talib.MIN(np.asarray(df['close']), 10)
-	min_20d = talib.MIN(np.asarray(df['close']), 20)
-	min_60d = talib.MIN(np.asarray(df['close']), 60)
-	v_min_5d = talib.MIN(np.asarray(df['volume']), 5)
-	v_min_10d = talib.MIN(np.asarray(df['volume']), 10)
-	v_min_20d = talib.MIN(np.asarray(df['volume']), 20)
-	v_min_60d = talib.MIN(np.asarray(df['volume']), 60)
-	df['MIN_5D_R'] = min_5d / df['close']
-	df['MIN_10D_R'] = min_10d / df['close']
-	df['MIN_20D_R'] = min_20d / df['close']
-	df['MIN_60D_R'] = min_60d / df['close']
-	df['V_MIN_5D_R'] = v_min_5d / df['volume']
-	df['V_MIN_10D_R'] = v_min_10d / df['volume']
-	df['V_MIN_20D_R'] = v_min_20d / df['volume']
-	df['V_MIN_60D_R'] = v_min_60d / df['volume']
-
-	## MA & V_MA与当日收盘价的相对值
-	ma_5d = talib.MA(np.asarray(df["close"]), 5)
-	ma_10d = talib.MA(np.asarray(df["close"]), 10)
-	ma_20d = talib.MA(np.asarray(df["close"]), 20)
-	ma_60d = talib.MA(np.asarray(df["close"]), 60)
-	v_ma_5d = talib.MA(np.asarray(df["volume"]), 5)
-	v_ma_10d = talib.MA(np.asarray(df["volume"]), 10)
-	v_ma_20d = talib.MA(np.asarray(df["volume"]), 20)
-	v_ma_60d = talib.MA(np.asarray(df["volume"]), 60)
-	df['MA_5D_R'] = ma_5d / df['close']
-	df['MA_10D_R'] = ma_10d / df['close']
-	df['MA_20D_R'] = ma_20d / df['close']
-	df['MA_60D_R'] = ma_60d / df['close']
-	df['V_MA_5D_R'] = v_ma_5d / df['volume']
-	df['V_MA_10D_R'] = v_ma_10d / df['volume']
-	df['V_MA_20D_R'] = v_ma_20d / df['volume']
-	df['V_MA_60D_R'] = v_ma_60d / df['volume']
-
-	# 行列筛选
-	df = df[incr.notna()]
-
-	return df
-
-
-"""
-加载数据
-"""
-
-
-def load_data(path):
-	merge_df = pd.DataFrame()
-	if not os.path.isdir(path):
-		return merge_df
-	for file in os.listdir(path):
-		f = os.path.join(path, file)
-		Log.notice("loading %s ..." % f)
-		df = pd.read_csv(f)
-		old_len = len(df)
-		# 计算索引
-		df['code'] = df['code'].apply(norm_code)
-		df['key'] = df['code'] + ':' + df['date']
-		df = df.set_index('key')
-		# 处理数据
-		df = process(df)
-		new_len = len(df)
-		Log.notice("done, total %d lines, trimmed to %d lines." % (old_len, new_len))
-		# 追加一支股票数据
-		merge_df = merge_df.append(df)
-	return merge_df
-
-
-"""
 训练
 """
 
 
-def train(data_path, model_path):
-	## 加载数据
-	df = load_data(data_path)
+def train(data_path, model_path, sample=1.0):
+	# 加载数据
+	df = process.load_and_process(data_path, label=True, sample=sample)
 
-	## 检查模型目录
+	# 检查模型目录
 	if not os.path.isdir(model_path):
 		os.mkdir(model_path)
 
-	## 训练测试集划分
+	# 训练测试集划分
 	X = df.iloc[:, 1:]
 	y = df.iloc[:, 0]
 	X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.2, random_state=0)
-	Log.notice("shape of X_train: %s" % str(X_train.shape))
-	Log.notice("shape of y_train: %s" % str(y_train.shape))
-	Log.notice("shape of X_test: %s" % str(X_test.shape))
-	Log.notice("shape of y_test: %s" % str(y_test.shape))
+	print("shape of X_train: %s" % str(X_train.shape))
+	print("shape of y_train: %s" % str(y_train.shape))
+	print("shape of X_test: %s" % str(X_test.shape))
+	print("shape of y_test: %s" % str(y_test.shape))
 
-	## 训练xgboost模型
+	# 训练xgboost模型
 	model = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
 	model.fit(X_train, y_train)
-	Log.notice("model: %s" % str(model))
+	print("model: %s" % str(model))
 
-	## 输出训练集效果
+	# 输出训练集效果
 	y_pred = model.predict(X_train)
 	eval_dict = eval(y_train, y_pred)
-	Log.notice("evaluation on train: %s" % str(eval_dict))
+	print("evaluation on train: %s" % str(eval_dict))
 
-	## 输出测试集效果
+	# 输出测试集效果
 	y_pred = model.predict(X_test)
 	eval_dict = eval(y_test, y_pred)
-	Log.notice("evaluation on test: %s" % str(eval_dict))
+	print("evaluation on test: %s" % str(eval_dict))
 
-	## 输出测试集调整阈值后的效果
+	# 输出测试集调整阈值后的效果
 	y_pred = model.predict_proba(X_test)[:, 1]
 	eval_dict = eval(y_test, y_pred, 0.75)
-	Log.notice("evaluation on test with threshold=0.75: %s" % str(eval_dict))
+	print("evaluation on test with threshold=0.75: %s" % str(eval_dict))
 
-	## 保存模型文件
+	# 保存模型文件
 	model_file = os.path.join(model_path, 'model.txt')
 	pickle.dump(model, open(model_file, 'wb'))
 
-	## 测试结果输出
+	# 测试结果输出
 #    df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
 #    df_test = df_test.reset_index()
 #    df = df.reset_index()
@@ -250,18 +81,4 @@ def train(data_path, model_path):
 #    df_test = df_test.set_index('key')
 #    df_test.to_csv("test.csv")
 
-if __name__ == "__main__":
-
-	if len(sys.argv) < 2:
-		Log.error("Error: Invalid args.")
-		exit(1)
-	if sys.argv[1] == "tiny":
-		train(HISTORY_STOCK_TINY_DATA_PATH, XGBOOST_TINY_MODEL_PATH)
-	elif sys.argv[1] == "sample":
-		train(HISTORY_STOCK_SAMPLE_DATA_PATH, XGBOOST_SAMPLE_MODEL_PATH)
-	elif sys.argv[1] == "full":
-		train(HISTORY_STOCK_DATA_PATH, XGBOOST_MODEL_PATH)
-	else:
-		Log.error("Error: Invalid args.")
-		exit(1)
 
