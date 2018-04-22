@@ -2,14 +2,15 @@ import os
 import sys
 import getopt
 from config import *
+import download
 import train
 import predict
-
+from base.Time import Time
 
 def usage():
-	print("	spider: python %s spider [--history --new]" % sys.argv[0])
-	print("	train: python %s train [--tiny --sample]" % sys.argv[0])
-	print("	predict: python %s predict [--tiny --date]" % sys.argv[0])
+	print("	download: python %s download [--index --type=new|history]" % sys.argv[0])
+	print("	train: python %s train [--tiny --sample=]" % sys.argv[0])
+	print("	predict: python %s predict [--tiny --date=]" % sys.argv[0])
 	print("	help: python %s help" % sys.argv[0])
 
 
@@ -26,7 +27,32 @@ def main():
 		usage()
 		sys.exit()
 	# 抓取
-	elif cmd == "spider":
+	elif cmd == "download":
+		try:
+			opts, args = getopt.getopt(sys.argv[2:], "it:", ["index", "type="])
+		except getopt.GetoptError as err:
+			print(err)
+			usage()
+			sys.exit(1)
+		data = "stock"
+		type = "new"
+		for o, a in opts:
+			if o in ("-i", "--index"):
+				data = "index"
+			elif o in ("-t", "--type"):
+				type = a
+			else:
+				assert False, "Error: unknown option."
+		if data == "stock" and type == "new":
+			download.download_all_stock_k_data("data/new_stock", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
+		elif data == "stock" and type == "history":
+			download.download_all_stock_k_data("data/history_stock", start="2000-01-01", end="2017-12-31", ktype='D', autype='qfq')
+		elif data == "index" and type == "new":
+			download.download_all_index_k_data("data/new_index", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
+		elif data == "index" and type == "history":
+			download.download_all_index_k_data("data/history_index", start="2000-01-01", end="2017-12-31", ktype='D', autype='qfq')
+		else:
+			assert False, "Error: unknown args."
 		sys.exit()
 	# 训练
 	elif cmd == "train":

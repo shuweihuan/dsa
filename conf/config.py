@@ -14,6 +14,6 @@ NEW_STOCK_DATA_PATH = os.path.join(DATA_PATH, "new_stock")
 NEW_STOCK_TINY_DATA_PATH = os.path.join(DATA_PATH, "new_stock_tiny")
 PREDICT_STOCK_DATA_PATH = os.path.join(DATA_PATH, "predict_stock")
 PREDICT_STOCK_TINY_DATA_PATH = os.path.join(DATA_PATH, "predict_stock_tiny")
-XGBOOST_MODEL_PATH = os.path.join(MODEL_PATH, "xgboost_model")
+XGBOOST_MODEL_PATH = os.path.join(MODEL_PATH, "xgboost")
 XGBOOST_TINY_MODEL_PATH = os.path.join(MODEL_PATH, "xgboost_model_tiny")
 
