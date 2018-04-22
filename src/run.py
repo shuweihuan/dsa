@@ -46,9 +46,9 @@ def main():
 			else:
 				assert False, "Error: unknown option."
 		if data == "tiny":
-			train.train(HISTORY_STOCK_TINY_DATA_PATH, XGBOOST_TINY_MODEL_PATH, sample=sample)
+			train.train("data/history_stock_tiny", "model/xgboost/tiny", sample=sample)
 		else:
-			train.train(HISTORY_STOCK_DATA_PATH, XGBOOST_MODEL_PATH, sample=sample)
+			train.train("data/history_stock", "model/xgboost/full", sample=sample)
 		sys.exit()
 	# 预测
 	elif cmd == "predict":
@@ -68,9 +68,9 @@ def main():
 			else:
 				assert False, "Error: unknown option."
 		if data == "tiny":
-			predict.predict(XGBOOST_TINY_MODEL_PATH, NEW_STOCK_TINY_DATA_PATH, PREDICT_STOCK_TINY_DATA_PATH, date=date)
+			predict.predict("model/xgboost/tiny", "data/new_stock_tiny", "predict/stock_tiny", date=date)
 		else:
-			predict.predict(XGBOOST_MODEL_PATH, NEW_STOCK_DATA_PATH, PREDICT_STOCK_DATA_PATH, date=date)
+			predict.predict("model/xgboost/full", "data/new_stock", "predict/stock", date=date)
 		sys.exit()
 	# 其他
 	else:
@@ -78,6 +78,23 @@ def main():
 		usage()
 		sys.exit(1)
 
-if __name__ == "__main__":
-	main()
 
+if __name__ == "__main__":
+	# 目录初始化
+	model_path = os.path.join(MAIN_PATH, "model")
+	xgboost_model_path = os.path.join(model_path, "xgboost")
+	predict_path = os.path.join(MAIN_PATH, "predict")
+	tiny_predict_path = os.path.join(predict_path, "stock_tiny")
+	full_predict_path = os.path.join(predict_path, "stock")
+	if not os.path.isdir(model_path):
+		os.mkdir(model_path)
+	if not os.path.isdir(xgboost_model_path):
+		os.mkdir(xgboost_model_path)
+	if not os.path.isdir(predict_path):
+		os.mkdir(predict_path)
+	if not os.path.isdir(tiny_predict_path):
+		os.mkdir(tiny_predict_path)
+	if not os.path.isdir(full_predict_path):
+		os.mkdir(full_predict_path)
+	# 主函数
+	main()

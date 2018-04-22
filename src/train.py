@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn import model_selection
 from sklearn import metrics
 from xgboost import XGBClassifier
+from config import *
 
 
 """
@@ -33,10 +34,17 @@ def eval(y, y_pred, threshold=0.5):
 
 
 def train(data_path, model_path, sample=1.0):
+	# 转换为绝对路径
+	data_path = os.path.join(MAIN_PATH, data_path)
+	model_path = os.path.join(MAIN_PATH, model_path)
+
 	# 加载数据
 	df = process.load_and_process(data_path, label=True, sample=sample)
 
-	# 检查模型目录
+	# 检查目录
+	if not os.path.isdir(data_path):
+		print("Error: training data '%s' does not exist." % data_path)
+		sys.exit(1)
 	if not os.path.isdir(model_path):
 		os.mkdir(model_path)
 
@@ -70,7 +78,7 @@ def train(data_path, model_path, sample=1.0):
 	print("evaluation on test with threshold=0.75: %s" % str(eval_dict))
 
 	# 保存模型文件
-	model_file = os.path.join(model_path, 'model.txt')
+	model_file = model_path + ".txt"
 	pickle.dump(model, open(model_file, 'wb'))
 
 	# 测试结果输出
@@ -81,4 +89,6 @@ def train(data_path, model_path, sample=1.0):
 #    df_test = df_test.set_index('key')
 #    df_test.to_csv("test.csv")
 
-
+if __name__ == "__main__":
+	# 在tiny数据集上测试
+	train("data/history_stock_tiny", "model/xgboost/tiny", sample=0.1)

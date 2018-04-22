@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import talib
+from config import *
 
 
 """
@@ -143,8 +144,8 @@ def process_data(df, label=True, date=""):
 		# 行列筛选
 		df = df[incr.notna()]
 
+	# 筛选指定日期
 	if date != "":
-		# 筛选指定日期
 		df = df[df['date'] == date]
 
 	# 丢弃date字段
@@ -176,6 +177,7 @@ def load_data(data_file):
 def load_and_process(data_path, label=True, sample=1.0, date=""):
 	merge_df = pd.DataFrame()
 	if not os.path.isdir(data_path):
+		print("Error: data path '%s' does not exist." % data_path)
 		return merge_df
 	for file in os.listdir(data_path):
 		# 加载数据
@@ -187,6 +189,8 @@ def load_and_process(data_path, label=True, sample=1.0, date=""):
 		df = process_data(df, label, date)
 		# 随机抽样
 		n = int(sample * len(df))
+		if n == 0:
+			continue
 		df = df.sample(n=n)
 		# 汇总股票数据
 		print("merging %d records ..." % len(df))
