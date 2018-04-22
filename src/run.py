@@ -44,13 +44,13 @@ def main():
 			else:
 				assert False, "Error: unknown option."
 		if data == "stock" and type == "new":
-			download.download_all_stock_k_data("data/new_stock", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
+			download.download_all_stock_k_data("../data/new_stock", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
 		elif data == "stock" and type == "history":
-			download.download_all_stock_k_data("data/history_stock", start="2000-01-01", end="2017-12-31", ktype='D', autype='qfq')
+			download.download_all_stock_k_data("../data/history_stock", start="2000-01-01", end="2017-12-31", ktype='D', autype='qfq')
 		elif data == "index" and type == "new":
-			download.download_all_index_k_data("data/new_index", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
+			download.download_all_index_k_data("../data/new_index", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
 		elif data == "index" and type == "history":
-			download.download_all_index_k_data("data/history_index", start="2000-01-01", end="2017-12-31", ktype='D', autype='qfq')
+			download.download_all_index_k_data("../data/history_index", start="2000-01-01", end="2017-12-31", ktype='D', autype='qfq')
 		else:
 			assert False, "Error: unknown args."
 		sys.exit()
@@ -72,9 +72,9 @@ def main():
 			else:
 				assert False, "Error: unknown option."
 		if data == "tiny":
-			train.train("data/history_stock_tiny", "model/xgboost/tiny", sample=sample)
+			train.train("../data/history_stock_tiny", "../model/xgboost/tiny.model", sample=sample)
 		else:
-			train.train("data/history_stock", "model/xgboost/full", sample=sample)
+			train.train("../data/history_stock", "../model/xgboost/full.model", sample=sample)
 		sys.exit()
 	# 预测
 	elif cmd == "predict":
@@ -94,9 +94,9 @@ def main():
 			else:
 				assert False, "Error: unknown option."
 		if data == "tiny":
-			predict.predict("model/xgboost/tiny", "data/new_stock_tiny", "predict/stock_tiny", date=date)
+			predict.predict("../model/xgboost/tiny.model", "../data/new_stock_tiny", "../predict/stock_tiny", date=date)
 		else:
-			predict.predict("model/xgboost/full", "data/new_stock", "predict/stock", date=date)
+			predict.predict("../model/xgboost/full.model", "../data/new_stock", "../predict/stock", date=date)
 		sys.exit()
 	# 其他
 	else:

@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from sklearn import model_selection
 from sklearn import metrics
 from xgboost import XGBClassifier
-from config import *
 
 
 """
@@ -34,10 +33,6 @@ def eval(y, y_pred, threshold=0.5):
 
 
 def train(data_path, model_path, sample=1.0):
-	# 转换为绝对路径
-	data_path = os.path.join(MAIN_PATH, data_path)
-	model_path = os.path.join(MAIN_PATH, model_path)
-
 	# 加载数据
 	df = process.load_and_process(data_path, label=True, sample=sample)
 
@@ -45,8 +40,6 @@ def train(data_path, model_path, sample=1.0):
 	if not os.path.isdir(data_path):
 		print("Error: training data '%s' does not exist." % data_path)
 		sys.exit(1)
-	if not os.path.isdir(model_path):
-		os.mkdir(model_path)
 
 	# 训练测试集划分
 	X = df.iloc[:, 1:]
@@ -78,8 +71,7 @@ def train(data_path, model_path, sample=1.0):
 	print("evaluation on test with threshold=0.75: %s" % str(eval_dict))
 
 	# 保存模型文件
-	model_file = model_path + ".txt"
-	pickle.dump(model, open(model_file, 'wb'))
+	pickle.dump(model, open(model_path, 'wb'))
 
 	# 测试结果输出
 #    df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
@@ -91,4 +83,4 @@ def train(data_path, model_path, sample=1.0):
 
 if __name__ == "__main__":
 	# 在tiny数据集上测试
-	train("data/history_stock_tiny", "model/xgboost/tiny", sample=0.1)
+	train("../data/history_stock_tiny", "../model/xgboost/tiny.model", sample=0.1)
