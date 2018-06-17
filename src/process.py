@@ -18,6 +18,26 @@ def norm_code(code):
 
 
 """
+根据年月日获得月份
+"""
+
+
+def get_month(date):
+	month = date.split('-')[1]
+	return int(month)
+
+
+"""
+根据年月日获得日期
+"""
+
+
+def get_day(date):
+	day = date.split('-')[2]
+	return int(day)
+
+
+"""
 规范化浮点数
 """
 
@@ -58,6 +78,10 @@ def process_data(df, label=True, date=""):
 		df = df[['date', 'open', 'close', 'high', 'low', 'volume']]
 
 	# 计算特征
+
+	## 时间特征
+	df['MONTH'] = df['date'].apply(get_month)
+	df['DAY'] = df['date'].apply(get_day)
 
 	## 本日各价格之间的变化
 	df['OPEN_CLOSE_R'] = df['open'] / df['close']

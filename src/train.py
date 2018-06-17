@@ -82,5 +82,14 @@ def train(data_path, model_path, sample=1.0):
 #    df_test.to_csv("test.csv")
 
 if __name__ == "__main__":
-	# 在tiny数据集上测试
-	train("../data/history_stock_tiny", "../model/xgboost/tiny.model", sample=0.1)
+	if len(sys.argv) < 3:
+		print("Error: invalid number of args.")
+		print("Usage: %s input_path model_path [sample]" % sys.argv[0])
+		sys.exit(1)
+	input_path = sys.argv[1]
+	model_path = sys.argv[2]
+	sample = 1.0
+	if len(sys.argv) > 3:
+		sample = sys.argv[3]
+	train(input_path, model_path, sample)
+

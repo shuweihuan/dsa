@@ -94,9 +94,9 @@ def main():
 			else:
 				assert False, "Error: unknown option."
 		if data == "tiny":
-			predict.predict("../model/xgboost/tiny.model", "../data/new_stock_tiny", "../predict/stock_tiny", date=date)
+			predict.predict("../model/xgboost/tiny.model", "../data/new_stock_tiny", "../predict/stock_tiny/"+date+".txt", date=date)
 		else:
-			predict.predict("../model/xgboost/full.model", "../data/new_stock", "../predict/stock", date=date)
+			predict.predict("../model/xgboost/full.model", "../data/new_stock", "../predict/stock/"+date+".txt", date=date)
 		sys.exit()
 	# 其他
 	else:

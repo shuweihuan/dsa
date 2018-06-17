@@ -4,6 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 import tushare as ts
+from config import *
 from base.Log import Log
 from base.Time import Time
 
@@ -22,7 +23,7 @@ def download_k_data(folder_path, code, start, end, ktype, autype):
 		return False
 	f_name = os.path.join(folder_path, code + ".csv")
 	df.to_csv(f_name)
-	Log.notice("ts.get_k_data(code=%s, start=%s, end=%s, ktype=%s, autype=%s) - got %d items." % len(df))
+	Log.notice("ts.get_k_data(code=%s, start=%s, end=%s, ktype=%s, autype=%s) - got %d items." % (code, start, end, ktype, autype, len(df)))
 	return True
 
 
@@ -41,7 +42,6 @@ def download_all_index_k_data(folder_path, start, end, ktype, autype):
 
 
 def download_all_stock_k_data(folder_path, start, end, ktype, autype):
-	folder_path = os.path.join(MAIN_PATH, folder_path)
 	if not os.path.isdir(folder_path):
 		os.mkdir(folder_path)
 	try:
