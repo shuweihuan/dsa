@@ -84,7 +84,7 @@ def train(data_path, model_path, sample=1.0):
 if __name__ == "__main__":
 	if len(sys.argv) < 3:
 		print("Error: invalid number of args.")
-		print("Usage: %s input_path model_path [sample]" % sys.argv[0])
+		print("Usage: %s input_path model_path [sample=1.0]" % sys.argv[0])
 		sys.exit(1)
 	input_path = sys.argv[1]
 	model_path = sys.argv[2]

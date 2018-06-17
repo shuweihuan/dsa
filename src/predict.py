@@ -20,7 +20,7 @@ def predict(model_path, input_path, output_path, date=""):
 if __name__ == "__main__":
 	if len(sys.argv) < 4:
 		print("Error: invalid number of args.")
-		print("Usage: %s model_path input_path output_path [date]" % sys.argv[0])
+		print("Usage: %s model_path input_path output_path [date='']" % sys.argv[0])
 		sys.exit(1)
 	model_path = sys.argv[1]
 	input_path = sys.argv[2]

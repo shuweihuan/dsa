@@ -55,5 +55,18 @@ def download_all_stock_k_data(folder_path, start, end, ktype, autype):
 
 
 if __name__ == '__main__':
-	download_all_stock_k_data("../data/new_stock", start=Time.day(-180), end=Time.today(), ktype='D', autype='qfq')
+	if len(sys.argv) < 4:
+		print("Error: invalid number of args.")
+		print("Usage: %s data_path start_day end_day [ktype='D'] [autype='qfq']" % sys.argv[0])
+		sys.exit(1)
+	data_path = sys.argv[1]
+	start = sys.argv[2]
+	end = sys.argv[3]
+	ktype = 'D'
+	autype = 'qfq'
+	if len(sys.argv) > 4:
+		ktype = sys.argv[4]
+	if len(sys.argv) > 5:
+		autype = sys.argv[5]
+	download_all_stock_k_data(data_path, start, end, ktype, autype)
 
