@@ -80,8 +80,8 @@ def process_data(df, label=True, date=""):
 	# 计算特征
 
 	## 时间特征
-	df['MONTH'] = df['date'].apply(get_month)
-	df['DAY'] = df['date'].apply(get_day)
+#	df['MONTH'] = df['date'].apply(get_month)
+#	df['DAY'] = df['date'].apply(get_day)
 
 	## 本日各价格之间的变化
 	df['OPEN_CLOSE_R'] = df['open'] / df['close']
@@ -92,8 +92,8 @@ def process_data(df, label=True, date=""):
 	df['HIGH_LOW_R'] = df['high'] / df['low']
 
 	## 前日与本日的量价变化
-	prev_close = df['close'].shift(-1)
-	prev_volume = df['volume'].shift(-1)
+	prev_close = df['close'].shift(1)
+	prev_volume = df['volume'].shift(1)
 	df['PREV_OPEN_R'] = prev_close / df['open']
 	df['PREV_CLOSE_R'] = prev_close / df['close']
 	df['PREV_HIGH_R'] = prev_close / df['high']

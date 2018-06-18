@@ -90,6 +90,6 @@ if __name__ == "__main__":
 	model_path = sys.argv[2]
 	sample = 1.0
 	if len(sys.argv) > 3:
-		sample = sys.argv[3]
+		sample = float(sys.argv[3])
 	train(input_path, model_path, sample)
 

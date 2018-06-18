@@ -7,10 +7,10 @@ from base.Time import Time
 from base.Log import Log
 
 # 文件路径定义
-model_path = os.path.join(MAIN_PATH, "model/xgboost/stock_all_sample_4p_high_10p.model")
+model_path = os.path.join(MAIN_PATH, "model/xgboost.model")
 input_path = os.path.join(MAIN_PATH, "data/new_stock")
 predict_path = os.path.join(MAIN_PATH, "predict")
-output_path = os.path.join(predict_path, Time.today()+".txt")
+output_path = os.path.join(predict_path, Time.today()+"-all.txt")
 
 # 文件检查
 if not os.path.isfile(model_path):
