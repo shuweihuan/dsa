@@ -41,6 +41,10 @@ def train(data_path, model_path, sample=1.0):
 		print("Error: training data '%s' does not exist." % data_path)
 		sys.exit(1)
 
+	# 模型描述文件
+	desc_file_path = model_path + ".desc"
+	desc_file = open(desc_file_path, 'w')
+
 	# 训练测试集划分
 	X = df.iloc[:, 1:]
 	y = df.iloc[:, 0]
@@ -49,29 +53,40 @@ def train(data_path, model_path, sample=1.0):
 	print("shape of y_train: %s" % str(y_train.shape))
 	print("shape of X_test: %s" % str(X_test.shape))
 	print("shape of y_test: %s" % str(y_test.shape))
+	desc_file.write("shape of X_train: %s\n" % str(X_train.shape))
+	desc_file.write("shape of y_train: %s\n" % str(y_train.shape))
+	desc_file.write("shape of X_test: %s\n" % str(X_test.shape))
+	desc_file.write("shape of y_test: %s\n" % str(y_test.shape))
 
 	# 训练xgboost模型
 	model = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
 	model.fit(X_train, y_train)
 	print("model: %s" % str(model))
+	desc_file.write("model: %s\n" % str(model))
 
 	# 输出训练集效果
 	y_pred = model.predict(X_train)
 	eval_dict = eval(y_train, y_pred)
 	print("evaluation on train: %s" % str(eval_dict))
+	desc_file.write("evaluation on train: %s\n" % str(eval_dict))
 
 	# 输出测试集效果
 	y_pred = model.predict(X_test)
 	eval_dict = eval(y_test, y_pred)
 	print("evaluation on test: %s" % str(eval_dict))
+	desc_file.write("evaluation on test: %s\n" % str(eval_dict))
 
 	# 输出测试集调整阈值后的效果
 	y_pred = model.predict_proba(X_test)[:, 1]
 	eval_dict = eval(y_test, y_pred, 0.75)
 	print("evaluation on test with threshold=0.75: %s" % str(eval_dict))
+	desc_file.write("evaluation on test with threshold=0.75: %s\n" % str(eval_dict))
 
 	# 保存模型文件
 	pickle.dump(model, open(model_path, 'wb'))
+
+	# 关闭模型描述文件
+	desc_file.close()
 
 	# 测试结果输出
 #    df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])

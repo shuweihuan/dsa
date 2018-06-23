@@ -22,6 +22,12 @@ class Time:
 		return time.strftime('%H:%M:%S')
 
 	@staticmethod
+	def diffDays(day1, day2):
+		d1 = datetime.datetime.strptime(day1,'%Y-%m-%d');
+		d2 = datetime.datetime.strptime(day2,'%Y-%m-%d');
+		return (d2 - d1).days
+
+	@staticmethod
 	def oneYearAgo():
 		today = time.strftime('%Y-%m-%d')
 		today_ = today.split('-')

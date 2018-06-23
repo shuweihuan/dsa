@@ -1,0 +1,17 @@
+shape of X_train: (292119, 49)
+shape of y_train: (292119,)
+shape of X_test: (73030, 49)
+shape of y_test: (73030,)
+model: XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
+       colsample_bytree=1, eval_metric='logloss', gamma=0,
+       learning_rate=0.1, max_delta_step=0, max_depth=3,
+       min_child_weight=1, missing=None, n_estimators=100, n_jobs=1,
+       nthread=None, objective='binary:logistic', random_state=0,
+       reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=None,
+       silent=True, subsample=1)
+evaluation on train: {'accuracy': 0.9241336578586125, 'auc': 0.9237879588651684, 'precision': 0.9259759001370951, 'recall': 0.9151204415476989, 'f1-score': 0.9205161679052019, 'confusion_matrix': array([[141626,  10259],
+       [ 11903, 128331]], dtype=int64)}
+evaluation on test: {'accuracy': 0.9217855675749692, 'auc': 0.9213704297789477, 'precision': 0.9236658932714618, 'recall': 0.9118185982592762, 'f1-score': 0.917704011065007, 'confusion_matrix': array([[35470,  2632],
+       [ 3080, 31848]], dtype=int64)}
+evaluation on test with threshold=0.75: {'accuracy': 0.896645214295495, 'auc': 0.8928196716252128, 'precision': 0.9746879334257975, 'recall': 0.804798442510307, 'f1-score': 0.881633421151675, 'confusion_matrix': array([[37372,   730],
+       [ 6818, 28110]], dtype=int64)}

@@ -48,15 +48,12 @@ def norm_float(x, precision=4):
 
 
 """
-是否上涨10%以上
+将timedelta转化为相隔天数
 """
 
 
-def is_gt_10pp(x):
-	if x > 0.1:
-		return 1
-	else:
-		return 0
+def norm_delta_days(delta):
+	return delta.days
 
 
 """
@@ -67,9 +64,9 @@ def is_gt_10pp(x):
 def process_data(df, label=True, date=""):
 	if label == True:
 		# 计算目标
-		## 预测未来5日最高涨幅
-		incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来五日的最高涨幅
-		df['label'] = incr.apply(is_gt_10pp)  # 未来5日最高点距当前价格上涨10%以上
+		#incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来5日的最高涨幅
+		incr = df['high'].rolling(20).max().shift(20) / df['close'] - 1  # 未来20日的最高涨幅
+		df['label'] = incr.apply(lambda x: 1 if x > 0.1 else 0)  # 目标价格上涨10%以上
 
 	# 保留基础字段
 	if label == True:
@@ -82,23 +79,25 @@ def process_data(df, label=True, date=""):
 	## 时间特征
 #	df['MONTH'] = df['date'].apply(get_month)
 #	df['DAY'] = df['date'].apply(get_day)
+	delta = pd.to_datetime(df['date']) - pd.to_datetime(df['date'].shift(1))
+	df["DELTA_DAYS"] = delta.apply(norm_delta_days)  # 与上一交易日间隔天数
 
 	## 本日各价格之间的变化
-	df['OPEN_CLOSE_R'] = df['open'] / df['close']
-	df['HIGH_CLOSE_R'] = df['high'] / df['close']
-	df['LOW_CLOSE_R'] = df['low'] / df['close']
-	df['HIGH_OPEN_R'] = df['high'] / df['open']
-	df['LOW_OPEN_R'] = df['low'] / df['open']
-	df['HIGH_LOW_R'] = df['high'] / df['low']
+	df['OPEN_CLOSE_R'] = df['open'] / df['close']  # 当日开盘价/当日收盘价
+	df['HIGH_CLOSE_R'] = df['high'] / df['close']  # 当日最高价/当日收盘价
+	df['LOW_CLOSE_R'] = df['low'] / df['close']  # 当日最低价/当日收盘价
+	df['HIGH_OPEN_R'] = df['high'] / df['open']  # 当日最高价/当日开盘价
+	df['LOW_OPEN_R'] = df['low'] / df['open']  # 当日最低价/当日开盘价
+	df['HIGH_LOW_R'] = df['high'] / df['low']  # 当日最高价/当日最低价
 
 	## 前日与本日的量价变化
 	prev_close = df['close'].shift(1)
 	prev_volume = df['volume'].shift(1)
-	df['PREV_OPEN_R'] = prev_close / df['open']
-	df['PREV_CLOSE_R'] = prev_close / df['close']
-	df['PREV_HIGH_R'] = prev_close / df['high']
-	df['PREV_LOW_R'] = prev_close / df['low']
-	df['PREV_VOL_R'] = prev_volume / df['volume']
+	df['PREV_OPEN_R'] = prev_close / df['open']  # 前日收盘价/当日开盘价
+	df['PREV_CLOSE_R'] = prev_close / df['close']  # 前日收盘价/当日收盘价
+	df['PREV_HIGH_R'] = prev_close / df['high']  # 前日收盘价/当日最高价
+	df['PREV_LOW_R'] = prev_close / df['low']  # 前日收盘价/当日最低价
+	df['PREV_VOL_R'] = prev_volume / df['volume']  # 前日交易量/当日交易量
 
 	## 近日量价变化
 	df['PREV_5D_R'] = df['close'].pct_change(periods=5)  # 近5日价格涨幅
