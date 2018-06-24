@@ -15,10 +15,17 @@ def predict(model_path, input_path, output_path, test=False, date=""):
 	y = df.iloc[:, 0]
 	# 预测
 	y_pred = model.predict_proba(X)[:, 1]
+	y_pred_df = pd.DataFrame(y_pred, index=X.index, columns=['pred'])
 	if test==True:
+		desc_file_path = output_path + ".desc"
+		desc_file = open(desc_file_path, 'w')
+		print("shape of X: %s" % str(X.shape))
+		print("shape of y: %s" % str(y.shape))
+		desc_file.write("shape of X: %s\n" % str(X.shape))
+		desc_file.write("shape of y: %s\n" % str(y.shape))
 		eval_dict = process.eval(y, y_pred, 0.75)
 		print("evaluation on test with threshold=0.75: %s" % str(eval_dict))
-	y_pred_df = pd.DataFrame(y_pred, index=X.index, columns=['pred'])
+		desc_file.write("evaluation on test with threshold=0.75: %s\n" % str(eval_dict))
 	# 预测结果输出
 	y_pred_df.to_csv(output_path)
 
