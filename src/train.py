@@ -15,7 +15,7 @@ from xgboost import XGBClassifier
 """
 
 
-def train(data_path, model_path, sample=1.0):
+def train(data_path, model_path, debug=False, sample=1.0):
 	# 加载数据
 	df = process.load_and_process(data_path, train=True, sample=sample)
 
@@ -71,16 +71,20 @@ def train(data_path, model_path, sample=1.0):
 	# 关闭模型描述文件
 	desc_file.close()
 
-	# 测试结果输出
-#    df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
-#    df_test = df_test.reset_index()
-#    df = df.reset_index()
-#    df_test = pd.merge(df_test, df, on='key', how='inner')
-#    df_test = df_test.set_index('key')
-#    df_test.to_csv("test.csv")
+	# debug输出
+	if debug:
+		debug_file_path = model_path + ".debug"
+		df_test = pd.DataFrame(y_pred, index=y_test.index, columns=['pred'])
+		df_test = df_test.reset_index()
+		df = df.reset_index()
+		df_test = pd.merge(df_test, df, on='key', how='inner')
+		df_test = df_test.set_index('key')
+		df_test.to_csv(debug_file_path)
+
 
 def usage():
-	print("Usage: python train.py input_path model_path [-s|--sample=1.0]")
+	print("Usage: python train.py input_path model_path [-d|--debug] [-s|--sample=1.0]")
+
 
 if __name__ == "__main__":
 	if len(sys.argv) < 3:
@@ -89,18 +93,21 @@ if __name__ == "__main__":
 		sys.exit(1)
 	input_path = sys.argv[1]
 	model_path = sys.argv[2]
+	debug = False
 	sample = 1.0
 	if len(sys.argv) > 3:
 		try:
-			opts, args = getopt.getopt(sys.argv[3:], "s:", ["sample="])
+			opts, args = getopt.getopt(sys.argv[3:], "ds:", ["debug", "sample="])
 		except getopt.GetoptError as err:
 			print(err)
 			usage()
 			sys.exit(1)
 		for o, a in opts:
-			if o in ("-s", "--sample"):
+			if o in ("-d", "--debug"):
+				debug = True
+			elif o in ("-s", "--sample"):
 				sample = float(a)
 			else:
 				assert False, "Error: unknown option."
-	train(input_path, model_path, sample)
+	train(input_path, model_path, debug, sample)
 

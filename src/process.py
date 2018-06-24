@@ -83,8 +83,8 @@ def process_data(df):
 
 	# 计算目标
 	#incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来5日的最高涨幅
-	incr = df['high'].rolling(10).max().shift(10) / df['close'] - 1  # 未来10日的最高涨幅
-	#incr = df['high'].rolling(20).max().shift(20) / df['close'] - 1  # 未来20日的最高涨幅
+	incr = df['high'].rolling(10).max().shift(-10) / df['close'] - 1  # 未来10日的最高涨幅
+	#incr = df['high'].rolling(20).max().shift(-20) / df['close'] - 1  # 未来20日的最高涨幅
 	df['label'] = incr.apply(lambda x: 1 if x > 0.1 else 0)  # 目标价格上涨10%以上
 
 	# 保留基础字段
