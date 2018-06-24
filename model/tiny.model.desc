@@ -1,7 +1,7 @@
-shape of X_train: (8948, 49)
-shape of y_train: (8948,)
-shape of X_test: (2237, 49)
-shape of y_test: (2237,)
+shape of X_train: (9060, 49)
+shape of y_train: (9060,)
+shape of X_test: (2266, 49)
+shape of y_test: (2266,)
 model: XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
        colsample_bytree=1, eval_metric='logloss', gamma=0,
        learning_rate=0.1, max_delta_step=0, max_depth=3,
@@ -9,9 +9,9 @@ model: XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
        nthread=None, objective='binary:logistic', random_state=0,
        reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=None,
        silent=True, subsample=1)
-evaluation on train: {'accuracy': 0.9427805096110863, 'auc': 0.9421995603079603, 'precision': 0.9416200437849671, 'recall': 0.9343470914796042, 'f1-score': 0.9379694693481948, 'confusion_matrix': array([[4565,  240],
-       [ 272, 3871]], dtype=int64)}
-evaluation on test: {'accuracy': 0.9257934734018776, 'auc': 0.9247218841501406, 'precision': 0.9210789210789211, 'recall': 0.9137760158572844, 'f1-score': 0.9174129353233831, 'confusion_matrix': array([[1149,   79],
-       [  87,  922]], dtype=int64)}
-evaluation on test with threshold=0.75: {'accuracy': 0.9065713008493518, 'auc': 0.8985530873603368, 'precision': 0.9716981132075472, 'recall': 0.8166501486620417, 'f1-score': 0.8874528809908455, 'confusion_matrix': array([[1204,   24],
-       [ 185,  824]], dtype=int64)}
+evaluation on train: {'accuracy': 0.9400662251655629, 'auc': 0.9386967788150467, 'precision': 0.9375472173256106, 'recall': 0.9265803882528622, 'f1-score': 0.9320315433721367, 'confusion_matrix': array([[4794,  248],
+       [ 295, 3723]], dtype=int64)}
+evaluation on test: {'accuracy': 0.9240953221535746, 'auc': 0.9234091563489779, 'precision': 0.9235181644359465, 'recall': 0.9130434782608695, 'f1-score': 0.9182509505703422, 'confusion_matrix': array([[1128,   80],
+       [  92,  966]], dtype=int64)}
+evaluation on test with threshold=0.75: {'accuracy': 0.9002647837599294, 'auc': 0.8944857221547591, 'precision': 0.9748858447488584, 'recall': 0.8071833648393195, 'f1-score': 0.8831437435367115, 'confusion_matrix': array([[1186,   22],
+       [ 204,  854]], dtype=int64)}

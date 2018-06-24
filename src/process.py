@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import talib
+from sklearn import metrics
 from config import *
 
 
@@ -57,22 +58,36 @@ def norm_delta_days(delta):
 
 
 """
+计算评估结果
+"""
+
+
+def eval(y, y_pred, threshold=0.5):
+	y_pred = (y_pred >= threshold) * 1
+	eval_dict = {}
+	eval_dict["accuracy"] = metrics.accuracy_score(y, y_pred)
+	eval_dict["auc"] = metrics.roc_auc_score(y, y_pred)
+	eval_dict["precision"] = metrics.precision_score(y, y_pred)
+	eval_dict["recall"] = metrics.recall_score(y, y_pred)
+	eval_dict["f1-score"] = metrics.f1_score(y, y_pred)
+	eval_dict["confusion_matrix"] = metrics.confusion_matrix(y, y_pred)
+	return eval_dict
+
+
+"""
 处理数据
 """
 
 
-def process_data(df, label=True, date=""):
-	if label == True:
-		# 计算目标
-		#incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来5日的最高涨幅
-		incr = df['high'].rolling(20).max().shift(20) / df['close'] - 1  # 未来20日的最高涨幅
-		df['label'] = incr.apply(lambda x: 1 if x > 0.1 else 0)  # 目标价格上涨10%以上
+def process_data(df):
+
+	# 计算目标
+	#incr = df['high'].rolling(5).max().shift(-5) / df['close'] - 1  # 未来5日的最高涨幅
+	incr = df['high'].rolling(20).max().shift(20) / df['close'] - 1  # 未来20日的最高涨幅
+	df['label'] = incr.apply(lambda x: 1 if x > 0.1 else 0)  # 目标价格上涨10%以上
 
 	# 保留基础字段
-	if label == True:
-		df = df[['label', 'date', 'open', 'close', 'high', 'low', 'volume']]
-	else:
-		df = df[['date', 'open', 'close', 'high', 'low', 'volume']]
+	df = df[['label', 'date', 'open', 'close', 'high', 'low', 'volume']]
 
 	# 计算特征
 
@@ -163,17 +178,6 @@ def process_data(df, label=True, date=""):
 	df['V_MA_20D_R'] = v_ma_20d / df['volume']
 	df['V_MA_60D_R'] = v_ma_60d / df['volume']
 
-	if label == True:
-		# 行列筛选
-		df = df[incr.notna()]
-
-	# 筛选指定日期
-	if date != "":
-		df = df[df['date'] == date]
-
-	# 丢弃date字段
-	df = df.drop('date', axis=1)
-
 	return df
 
 
@@ -197,7 +201,7 @@ def load_data(data_file):
 """
 
 
-def load_and_process(data_path, label=True, sample=1.0, date=""):
+def load_and_process(data_path, train=True, sample=1.0, date=""):
 	merge_df = pd.DataFrame()
 	if not os.path.isdir(data_path):
 		print("Error: data path '%s' does not exist." % data_path)
@@ -209,12 +213,20 @@ def load_and_process(data_path, label=True, sample=1.0, date=""):
 		df = load_data(f)
 		# 处理数据
 		print("processing ...")
-		df = process_data(df, label, date)
+		df = process_data(df)
 		# 随机抽样
-		n = int(sample * len(df))
-		if n == 0:
-			continue
-		df = df.sample(n=n)
+		if sample < 1.0:
+			n = int(sample * len(df))
+			if n == 0:
+				continue
+			df = df.sample(n=n)
+		# 处理label
+		if train== True:
+			df = df[df['label'].notna()]
+		# 处理date
+		if date != "":
+			df = df[df['date'] == date]
+		df = df.drop('date', axis=1)
 		# 汇总股票数据
 		print("merging %d records ..." % len(df))
 		merge_df = merge_df.append(df)
